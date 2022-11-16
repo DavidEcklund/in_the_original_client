@@ -5,16 +5,22 @@ function App() {
   const [answer, setAnswer] = useState();
 
   const getAnswer = async () => {
-    const res = await fetch("http://localhost:3000/");
-    const answer = await res.json();
+    const response = await fetch("http://localhost:3000/");
+    const objFromJSON = await response.json();
+    const answer = objFromJSON.msg; 
     setAnswer(answer);
   };
-
+  
+  
   useEffect(() => {
     getAnswer();
   }, []);
-
-  return <div className="App">{answer.msg}</div>;
+  
+  return (
+    <>
+      {String(answer)}
+    </>
+  )
 }
   
 export default App;
