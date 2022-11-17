@@ -10,7 +10,7 @@ export default function SentenceList({texts}) {
       <div>
         {texts.map(text => {
           return (
-            <Sentence key={text.id} {...text} />
+            <Sentence key={text.id} sentences={text.sentences} />
           )
         })}
       </div>
