@@ -1,4 +1,3 @@
-import '../css/App.css';
 import SentenceList from './SentenceList';
 import React, { useState, useEffect } from "react";
 
