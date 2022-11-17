@@ -6,6 +6,7 @@ export const TextPairContext = React.createContext();
 function App() {
   const [texts, setTexts] = useState(sampleTexts);
   const [currentSentence, setCurrentSentence] = useState(0)
+  let numberOfSentences = texts[0].sentences.length
 
   const getTexts = async () => {
     const response = await fetch("http://localhost:3000/");
@@ -17,17 +18,42 @@ function App() {
   useEffect(() => {
     getTexts();
   }, []);
+
+  useEffect(() => {
+    window.addEventListener('keydown', (event) => {
+      handleKeyDown(event);
+    });
+  });
   
   const textPairContextValue = {
     handleProceedToNextSentence,
+    handleGoBackToPreviousSentence,
+    numberOfSentences,
     currentSentence  
   }
 
   function handleProceedToNextSentence() {
-    setCurrentSentence(currentSentence + 1);
+    const nextSentence = currentSentence < numberOfSentences - 1? currentSentence + 1 : numberOfSentences - 1;
+    setCurrentSentence(nextSentence);
   }
 
-  // console.log(texts, 'texts in App', Object.getPrototypeOf(texts));
+  function handleGoBackToPreviousSentence() {
+    const prevSentence = currentSentence > 0 ? currentSentence - 1 : 0;
+    setCurrentSentence(prevSentence);
+  }
+
+  const handleKeyDown = e => {
+    const key = e.key;
+
+    if (!(e.target.tagName === 'BUTTON') &&
+      (key === 'Enter' ||
+      key === 'ArrowRight')) {
+      handleProceedToNextSentence();
+    }
+    else if (key === 'ArrowLeft') {
+      handleGoBackToPreviousSentence();
+    }
+  };
 
 
   return (

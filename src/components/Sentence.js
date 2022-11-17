@@ -1,12 +1,7 @@
-import React, { useContext } from 'react'
-import { TextPairContext } from './App'
-
-export default function Sentence({ sentences }) {
-  const { currentSentence } = useContext(TextPairContext);
-
+export default function Sentence({ sentence }) {
   return (
     <div>
-      {sentences[currentSentence]}
+      {sentence}
     </div>
   )
 }
