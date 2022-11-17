@@ -1,70 +1,183 @@
-# Getting Started with Create React App
+# Overview
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+- “In the Original”: interlinear language-learning app. For people who want to enjoy the best literature their target language has to offer from the *beginning* of their relationship with it. Basically a sentence-by-sentence textual/audio display of existing (public domain and/or user provided)works and their translations and audiobooks. Various display options available, the default being:
+    - Target language sentence (bigger and above);
+    - Teaching language (smaller and below);
+    - Audio: target language;
+    - Rhythm: synched with audio (with optional inter-sentence pauses) or wait for swipe to proceed to next sentence.
 
-## Available Scripts
+# Inspiration
 
-In the project directory, you can run:
+- closest thing : [https://beelinguapp.com/](https://beelinguapp.com/)
+    - What’s missing: does not allow users to supply their own content
+- [https://easyoriginal.com/ueber-easyoriginal/](https://easyoriginal.com/ueber-easyoriginal/)
+    - much later, with a lot more human touch, perhaps a Ilya Frank-like method could be achieved?
 
-### `npm start`
+# MVC Web App Feature overview
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Text only
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- user uploads file or pastes text directly
+- text is automatically split by sentence, then user-checked
+- Easy UI for user editing split of 2 languages at a time
+- English menu interface; Languages supported for pairing (minimally):
+    - English
+    - German
+    - Russian
+    - Italian
+    - French
+    - Koine Greek
 
-### `npm test`
+### Out of Scope:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- multiple users with authorization, etc.
+- mobile-specific UI
+- mouse editing (equiv. to mobile UI)
+- all textual niceties (italics, paragraph styles, bullets, etc)
+- images
+- copyright concerns
+- hosting (limit to Github and personal use)
+- exotic scripts, e.g. Chinese (if they have any special requirements)
 
-### `npm run build`
+# DRAFT Roadmap to MVC
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 0.0.1 Set up React on Rails app **✅**
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- Client and API with separate repos
+- Hello World from one to the other
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 0.0.2 Basic frontend **✅**
 
-### `npm run eject`
+- Start with React frontend and then work back from there
+    - UI ⇒ Frontend ⇒ Backend
+    - SPA vs. `show` of Target L: (`/lang_1/Target_L_ID/lang_2/Teaching_L_ID`)
+- Simply have two texts hard-coded in front end.
+- pre-split (hard-coded) sentences from pre-paired texts displayed
+- `Enter` or `Space` proceeds to next pair
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## 0.0.3 Basic backend
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- Set up Rails 7 Backend with a Text model and a Sentence model
+    - Text `has many` Sentences
+- Send text as pre-split batch of sentences to the front end
+- Display
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## 0.0.4 UrText and UrSentence entities
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- Distinct class/models to which all instances of a text (or sentence) belong — including the original
+    - has no instance of the text directly, just metadata
+    - this avoids risk of *combinatorial explosion:*
+        - if A&B are paired (texts or sentences) and B&C are paired, then A&C are paired
+- one text per UrText is the `original` (boolean attribute; same goes for (Ur)sentences)
 
-## Learn More
+## 0.0.5 TextPair entity
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- Every test pair that as actually been used instantiates a TextPair object
+    - TextPair `has many` (2) Texts
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 0.1 Display multiple language pairs in succession
 
-### Code Splitting
+- Frontend provides interface for selecting from any other texts that belong to the same UrText
+- End-to-end test: 1 UT with 3 T’s
+    - e.g. *Philosophie der Freiheit* preface first paragraph: Deu, Eng, Rus
+    - show all 3 pairs (1 pair at a time), switching between them as the text progresses
+    - first time the 3rd language is requested:
+        - TextPair is created
+        - whole batch of its sentences is sent
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## 0.1.1 Create TextSection entity
 
-### Analyzing the Bundle Size
+- Text > Section > Sentence (Text `has many` Sentences `through` Section)
+- Each section has a maximum of 100 sentences.
+    - Array holds sentences
+    - Index of array is used to proceed from one sentence to the next (no DB queries)
+    - If the sentence found in the next index of a section does not belong to the next sentence in the UrSection, throw an error.
+- Each text is broken up into sections.
+- One section is sent to the frontend at a time.
+- `original` / UrSection needed
+- Test with 3-sentence-long sections
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Questions at this point:
 
-### Making a Progressive Web App
+- Do Sentences (Sections?) know which sentence comes before/after (KSUID of each)?
+- Do Texts have an array of Sections in order?
+- Do Texts maintain the original (non-split) text data? Does it ever change?
+- How many sections can there be in a text? Any limit?
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 0.1.2 Remember progress
 
-### Advanced Configuration
+- Return to where I left of for that text pair
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 0.2 Automatic Sentence Splitter
 
-### Deployment
+- auto-splitter splits files (hard-coded reference to text files / here-doc)
+    - see my original sentence splitter project
+    - and text alignment links (studies and libraries)
+- before a text is added and split, user must choose the UrT it belongs to (default being new one is created)
+- UrSentences are instantiated when UrText is.
+    - I.e. automatically when sentences are split.
+    - Each UrSentence `has_many` Sentences
+        - in the first instance, the corresponding sentences of the texts being split
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## 0.3 Index and New Views and JSON Import/Export
 
-### `npm run build` fails to minify
+Administrate?
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- `index` of all OriginalTexts — basic
+- upload texts in user interface (`new`)
+    - files and pasting
+    - automatically splits upon uploading
+- export/import JSON of split sentences
+    - serialization
+
+## 0.3.1 SentencePair entity
+
+- Every sentence pair that as actually been used instantiates a SentencePair object
+
+## 0.4 Pairing Texts, Checking Sentences
+
+- select which texts to associate (`edit`)
+- user edits split (auto-split first, then present to user for refinement)
+    - There’s no reason to do one sentence at a time because everything you’d need to do is possible in the pair view.
+    - numpad
+        - <Enter> (or <space>) = save as is
+        - bottom sentence
+            1. back to previous punctuation
+            2. back to previous word
+            3. add next section (to new punctuation)
+        - top sentence
+            1. back to previous punctuation
+            2. back to previous word
+            3. add next section (to new punctuation)
+- progress saved by SentencePair
+- `checked` SentencePairs
+    - For 0.4: if A&B are `checked` and B&C are `checked`, then A&C are `checked`
+    - if all SentencePair in a text pair are `checked`, then TextPair is “ready”
+
+## 0.5 Improved Index and Show Views
+
+- `Index` shows available languages
+    - each `show` includes matching texts (same text in another language or audio version)
+- display whether the text is `ready` or not (already split and human-checked)
+- each `show` shows progress towards being `ready` for each pair it is a part of
+    - percentage of `checked` sentences
+
+## 0.6 (Non-)Contagious Checking
+
+- Can access `show` of non-OT’s vis OT’s `show`
+    - from there, can choose another non-OT to pair with
+- Override already `checked` sentence pairs. E.g.:
+    - Deu (Original) &Eng = ready
+    - Thus, Eng&Rus = 30% done ⇒ Deu&Rus = 30% done
+    - Then, going through the first 30% of Deu&Rus, we adjust split, applying changes only to that particular pair.
+        - warning: Sure you want to override already checked?
+        - allow user to turn this off (per text pair or universally)
+    - Where is this add’l data kept?
+        - STI other than TranslationSentence and OriginalSentence: TranslationSentenceWithCustomMatches?
+            - controller recognizes Class needs special handling
+            - Implies that there are multiple “paths” (sets of split points) through any non-original sentence.
+            - Any part that is pushed to the preceding and/or succeeding sentences makes those sentences new, unchecked matches
+                - special case: pushing chunk back
+                    - show two Target sentences (present and immediately preceding ones) and two Teaching sentences to support proper splitting
+
+## 1.0 Optional: Hotwire or React (DOM manipulation w/out refresh)
