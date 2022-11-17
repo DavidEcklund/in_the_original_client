@@ -3,31 +3,22 @@ import SentenceList from './SentenceList';
 import React, { useState, useEffect } from "react";
 
 export const TextPairContext = React.createContext();
-// const LOCAL_STORAGE_KEY = 'inTheOriginal.texts'
 
 function App() {
   const [texts, setTexts] = useState(sampleTexts);
   const [currentSentence, setCurrentSentence] = useState(0)
 
-  // useEffect(() => {
-  //   const textJSON = localStorage.getItem(LOCAL_STORAGE_KEY)
-  //   if (textJSON != null) setTexts(JSON.parse(textJSON))
-  // }, [])
-
-  // const getTexts = async () => {
-  //   const response = await fetch("http://localhost:3000/");
-  //   const objFromJSON = await response.json();
-  //   const texts = objFromJSON.texts; 
-  //   setTexts(texts);
-  // };
+  const getTexts = async () => {
+    const response = await fetch("http://localhost:3000/");
+    const textsFromJSON = await response.json();
+    setTexts(textsFromJSON);
+  };
   
   
-  // useEffect(() => {
-  //   getTexts();
-  // }, []);
+  useEffect(() => {
+    getTexts();
+  }, []);
   
-  // console.log(texts);
-
   const textPairContextValue = {
     handleProceedToNextSentence,
     currentSentence  
