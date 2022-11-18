@@ -21,10 +21,15 @@ function App() {
   }, []);
 
   useEffect(() => {
-    window.addEventListener('keydown', (event) => {
-      handleKeyDown(event);
-    });
+    window.addEventListener('keydown', handleKeyDown); 
+      console.log("Adding!!!!!");
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+      console.log("REMOVING!!!!!");
+    };
   });
+
   
   const textPairContextValue = {
     handleProceedToNextSentence,
@@ -46,9 +51,7 @@ function App() {
   const handleKeyDown = e => {
     const key = e.key;
 
-    if ((!(e.target.tagName === 'BUTTON') &&
-      key === 'Enter') ||
-      key === 'ArrowRight') {
+    if (key === 'ArrowRight') {
       handleProceedToNextSentence();
     }
     else if (key === 'ArrowLeft') {
@@ -59,7 +62,9 @@ function App() {
 
   return (
     <TextPairContext.Provider value={textPairContextValue}>
-      <SentenceList texts={texts} />
+      <div>
+        <SentenceList texts={texts} />
+      </div>
     </TextPairContext.Provider>
   )
 }
@@ -67,11 +72,11 @@ function App() {
 const sampleTexts = [
   {
     id: 1,
-    sentences: ["Hello, World!", "Here's another sentence.", "Third sentence here."]
+    sentences: [""]
   },
   {
     id: 2,
-    sentences: ["Hi, Mom!", "Sentence 2.", "Sentence 3."]
+    sentences: [""]
   },
 ];
   
