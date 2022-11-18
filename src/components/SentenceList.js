@@ -12,15 +12,15 @@ export default function SentenceList({texts}) {
 
   return (
     <div>
-      <div>
+      <div className='sentence-list'>
         {texts.map(text => {
           return (
             <Sentence key={text.id} sentence={text.sentences[currentSentence]} />
           )
         })}
       </div>
-      <div>
-      <button 
+      <div className='nav-btn-area'>
+        <button 
           onClick={handleGoBackToPreviousSentence}
         >
           Previous Sentence
@@ -30,11 +30,11 @@ export default function SentenceList({texts}) {
         >
           Next Sentence
         </button>
+        <div>
+          You are at sentence {currentSentence + 1} of {numberOfSentences}
+        </div>
+      </div>
 
-      </div>
-      <div>
-        You are at sentence {currentSentence + 1} of {numberOfSentences}
-      </div>
     </div>
   );
 }

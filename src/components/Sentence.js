@@ -1,6 +1,6 @@
 export default function Sentence({ sentence }) {
   return (
-    <div>
+    <div className="sentence">
       {sentence}
     </div>
   )
