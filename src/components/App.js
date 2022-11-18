@@ -1,5 +1,6 @@
 import SentenceList from './SentenceList';
 import React, { useState, useEffect } from "react";
+import '../css/app.css'
 
 export const TextPairContext = React.createContext();
 
@@ -45,9 +46,9 @@ function App() {
   const handleKeyDown = e => {
     const key = e.key;
 
-    if (!(e.target.tagName === 'BUTTON') &&
-      (key === 'Enter' ||
-      key === 'ArrowRight')) {
+    if ((!(e.target.tagName === 'BUTTON') &&
+      key === 'Enter') ||
+      key === 'ArrowRight') {
       handleProceedToNextSentence();
     }
     else if (key === 'ArrowLeft') {
