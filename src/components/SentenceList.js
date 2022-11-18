@@ -2,11 +2,9 @@ import React, { useContext } from 'react'
 import { TextPairContext } from './App'
 import Sentence from './Sentence';
 
-export default function SentenceList({texts}) {
+export default function SentenceList() {
   const { 
-    handleProceedToNextSentence,
-    handleGoBackToPreviousSentence,
-    numberOfSentences, 
+    texts,
     currentSentence 
   } = useContext(TextPairContext);
 
@@ -19,22 +17,6 @@ export default function SentenceList({texts}) {
           )
         })}
       </div>
-      <div className='nav-btn-area'>
-        <button 
-          onClick={handleGoBackToPreviousSentence}
-        >
-          Previous Sentence
-        </button>
-        <button 
-          onClick={handleProceedToNextSentence}
-        >
-          Next Sentence
-        </button>
-        <div>
-          You are at sentence {currentSentence + 1} of {numberOfSentences}
-        </div>
-      </div>
-
     </div>
   );
 }

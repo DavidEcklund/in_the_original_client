@@ -1,5 +1,6 @@
 .sentence-list {
-  position: absolute;
-  top: 30%;
-  left: 50%;
+  min-height: 100vh;
+  min-width: 100vh;
+  border: 3px solid green;
+  padding: 20px 20px;
 }

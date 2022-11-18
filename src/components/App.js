@@ -1,6 +1,6 @@
-import SentenceList from './SentenceList';
 import React, { useState, useEffect } from "react";
 import '../css/app.css'
+import MainDisplay from './MainDisplay';
 
 export const TextPairContext = React.createContext();
 
@@ -22,11 +22,9 @@ function App() {
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown); 
-      console.log("Adding!!!!!");
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown)
-      console.log("REMOVING!!!!!");
     };
   });
 
@@ -34,6 +32,7 @@ function App() {
   const textPairContextValue = {
     handleProceedToNextSentence,
     handleGoBackToPreviousSentence,
+    texts,
     numberOfSentences,
     currentSentence  
   }
@@ -62,9 +61,7 @@ function App() {
 
   return (
     <TextPairContext.Provider value={textPairContextValue}>
-      <div>
-        <SentenceList texts={texts} />
-      </div>
+      <MainDisplay />
     </TextPairContext.Provider>
   )
 }
