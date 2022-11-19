@@ -53,91 +53,97 @@
     - SPA vs. `show` of Target L: (`/lang_1/Target_L_ID/lang_2/Teaching_L_ID`)
 - Simply have two texts hard-coded in front end.
 - pre-split (hard-coded) sentences from pre-paired texts displayed
-- `Enter` or `Space` proceeds to next pair
+- Left and Right arrows navigate
+- `Enter` or `Space` also activate navigation buttons
 
-## 0.0.3 Basic backend
+## 0.0.3 Basic backend: Text and TextDisplayGroup Entities
 
-- Set up Rails 7 Backend with a Text model and a Sentence model
-    - Text `has many` Sentences
-- Send text as pre-split batch of sentences to the front end
-- Display
+- A single `"sentence chunk"` is exactly 1 sentence each in the case of the UrText, but less || more than 1 sentence for every other Text (not an object or model, simple a string at a certain index)
+- Set up Rails 7 Backend with a `Text` model
+    - `sentence_chunks`: `text` in postgreSQL contains a JSON array of individual sentence chunks of entire text (e.g. book)
+    - DB seed:
+        - Populate with 20-sentence-long pre-split / aligned `text`s (JSON arrays)
+- create `TextDisplayGroup` model
+    - TextDisplayGroup `has many` Texts
+- create API to retrieve a `TextDisplayGroup` from backend
+    - Upon API GET (show: `/text1_ID/text2_id` ? (query string?), first text is top (main target text), second is below that, third would be below that, etc.) `sentence_chunks` arrays
+    - `TextDisplayGroup` object instantiates upon first API with a unique combination of Texts
+        - holds data about user’s progress through
 
-## 0.0.4 UrText and UrSentence entities
+## 0.0.4 `TextSection` and`TextSectionDisplayBatch` entities
 
-- Distinct class/models to which all instances of a text (or sentence) belong — including the original
-    - has no instance of the text directly, just metadata
-    - this avoids risk of *combinatorial explosion:*
-        - if A&B are paired (texts or sentences) and B&C are paired, then A&C are paired
-- one text per UrText is the `original` (boolean attribute; same goes for (Ur)sentences)
+- create `TextSection` entity
+    - holds **begin/end indexes** of where in Text string this was taken
+        - allows easily grabbing next section in either direction
+    - holds array of sentence chunk strings
+- create `TextSectionDisplayBatch` entity
+    - `has_many` TextSections
+    - One `TextSectionDisplayBatch` JSON payload: { TextSection_1_KSUID: [”DEUstring1”, “DEUstring2”, …], TextSection_2_KSUID: [”ENGstring1”, “ENGstring2”, …]}
+- Send `TextSectionDisplayBatch`es to frontend with DEFAULT_SENTENCE_CHUNK_BATCH_SIZE (5 for now) each
 
-## 0.0.5 TextPair entity
+## 0.0.5 Remember progress
 
-- Every test pair that as actually been used instantiates a TextPair object
-    - TextPair `has many` (2) Texts
+- Attribute of `TextDisplayGroup` : `current_sentence`
+- Return to where I left of for that `TextDisplayGroup`
 
-## 0.1 Display multiple language pairs in succession
+## 0.0.6 Display `TextSectionDisplayBatch` es as user moves through text
 
-- Frontend provides interface for selecting from any other texts that belong to the same UrText
-- End-to-end test: 1 UT with 3 T’s
-    - e.g. *Philosophie der Freiheit* preface first paragraph: Deu, Eng, Rus
-    - show all 3 pairs (1 pair at a time), switching between them as the text progresses
-    - first time the 3rd language is requested:
-        - TextPair is created
-        - whole batch of its sentences is sent
+- Set SENTENCES_FROM_NEW_BATCH_REQUEST_DEFAULT (2)
+- E.g. when user gets to sentence 3 (of original 5; i.e. there are 2 or less sentences after the current one), get additional `TextSectionDisplayBatch`
+- Now there are 10. When sentence 8 is reached, 11-15 are loaded.
 
-## 0.1.1 Create TextSection entity
+## 0.0.7 Retire `TextSectionDisplayBatches` and `TextSection`s when user is out of bounds
 
-- Text > Section > Sentence (Text `has many` Sentences `through` Section)
-- Each section has a maximum of 100 sentences.
-    - Array holds sentences
-    - Index of array is used to proceed from one sentence to the next (no DB queries)
-    - If the sentence found in the next index of a section does not belong to the next sentence in the UrSection, throw an error.
-- Each text is broken up into sections.
-- One section is sent to the frontend at a time.
-- `original` / UrSection needed
-- Test with 3-sentence-long sections
+- Both are`TextSection` and `TextSectionDisplayBatch`are temporarily persisted:
+- set TEXT_SECTIONS_FROM_CURRENT_SENTENCE_DEFAULT (2)
+- when user is more than that many TextSections from the furthest point of a given TextSection, it is retired from memory and the DB.
+    - e.g. 5 sentences * 2 sections = 10 sentences.
+    - at sentence 11, the first TextSection (1-5) is retired.
+    - Another explanation: Whenever the user progresses 2 TextSections away, the TextSection that is 1.0+ TextSections away from the current spot is retired
 
-### Questions at this point:
+## 0.0.8 Create `UrText` entity
 
-- Do Sentences (Sections?) know which sentence comes before/after (KSUID of each)?
-- Do Texts have an array of Sections in order?
-- Do Texts maintain the original (non-split) text data? Does it ever change?
-- How many sections can there be in a text? Any limit?
+- Purpose: needed for editing and navigation between readings
+    - associating all Texts with an UrText avoids risk of *combinatorial explosion:*
+        - if A&B Texts are grouped and B&C are grouped, then A&C are grouped
+- inherits from Text, but ***not*** STI
+- attr. array: contains canonical sentence split
+    - all other Texts conform to its sentences
+- update DB seed to populate UrText with correct text
+    - establish appropriate associations in seed too
 
-## 0.1.2 Remember progress
+## 0.0.9 Administrate gem
 
-- Return to where I left of for that text pair
+- `index` of all
+    - UrTexts
+        - shows length
+        - Texts
+    - Texts
+        - shows length
+        - `ready`
+        - UrText
+    - TextDisplayGroups
+        - show
+            - `current_sentence`
+            - length (amount of sentences)
+        - new
+            - Canonical splitting: each `TextDisplayGroup` must have an UrText or a `ready` Text
+- upload Texts and UrText
+    - pasting for now
+    - must choose UrText for Text
 
-## 0.2 Automatic Sentence Splitter
+## 0.0.10 Checked Sentences, Ready Texts
 
-- auto-splitter splits files (hard-coded reference to text files / here-doc)
-    - see my original sentence splitter project
-    - and text alignment links (studies and libraries)
-- before a text is added and split, user must choose the UrT it belongs to (default being new one is created)
-- UrSentences are instantiated when UrText is.
-    - I.e. automatically when sentences are split.
-    - Each UrSentence `has_many` Sentences
-        - in the first instance, the corresponding sentences of the texts being split
+- add`checked` array attribute to Texts
+- Add `ready` attribute to UrText
+    - array: holds boolean of whether one of its Texts has been fully `checked` against it, and is thus `ready`
+        - ready = {DEU_1_KSUID: boolean, …}
+- Canonical splitting: each `TextDisplayGroup` must have an UrText ***or*** a `ready` Text
+- Add `checked` percentage of total length to Text show on Administrate
 
-## 0.3 Index and New Views and JSON Import/Export
+## 0.0.11 Checking Sentences
 
-Administrate?
-
-- `index` of all OriginalTexts — basic
-- upload texts in user interface (`new`)
-    - files and pasting
-    - automatically splits upon uploading
-- export/import JSON of split sentences
-    - serialization
-
-## 0.3.1 SentencePair entity
-
-- Every sentence pair that as actually been used instantiates a SentencePair object
-
-## 0.4 Pairing Texts, Checking Sentences
-
-- select which texts to associate (`edit`)
-- user edits split (auto-split first, then present to user for refinement)
+- user edits split
     - There’s no reason to do one sentence at a time because everything you’d need to do is possible in the pair view.
     - numpad
         - <Enter> (or <space>) = save as is
@@ -149,35 +155,43 @@ Administrate?
             1. back to previous punctuation
             2. back to previous word
             3. add next section (to new punctuation)
-- progress saved by SentencePair
-- `checked` SentencePairs
-    - For 0.4: if A&B are `checked` and B&C are `checked`, then A&C are `checked`
-    - if all SentencePair in a text pair are `checked`, then TextPair is “ready”
+- checking progress saved by TextDisplayGroup’s Text’s `checked` array attributes (boolean at index corresponding to `sentence_chunks` array)
+    - All Texts in current TextDisplayGroup set `checked` to `true` at `current_sentence` index once they have been *shown and then moved past*
+- Update TextSection retirement flow:
+    - if any edits have been made (boolean sent from frontend)
+        - splice updated JSON array as string into the Texts’ “`sentence_chunks`" `text` datatype DB column
+        - **The beginning/end indexes in the `text` of all currently loaded TextSections are adjusted so that, if any of them are also changed, they can be spliced into the `text` replacing exactly the right spots.**
 
-## 0.5 Improved Index and Show Views
+## 0.0.12 Audio playback
 
-- `Index` shows available languages
-    - each `show` includes matching texts (same text in another language or audio version)
-- display whether the text is `ready` or not (already split and human-checked)
-- each `show` shows progress towards being `ready` for each pair it is a part of
-    - percentage of `checked` sentences
+- just simple keyboard / button navigation
+- create `AudioText` entity
+    - inherits from Text?
+- administrate upload audio file
+    - must choose Text it belongs to
+    - Text must be `ready` or UrText
 
-## 0.6 (Non-)Contagious Checking
+## 0.0.13 Audio split: manual only
 
-- Can access `show` of non-OT’s vis OT’s `show`
-    - from there, can choose another non-OT to pair with
-- Override already `checked` sentence pairs. E.g.:
-    - Deu (Original) &Eng = ready
-    - Thus, Eng&Rus = 30% done ⇒ Deu&Rus = 30% done
-    - Then, going through the first 30% of Deu&Rus, we adjust split, applying changes only to that particular pair.
-        - warning: Sure you want to override already checked?
-        - allow user to turn this off (per text pair or universally)
-    - Where is this add’l data kept?
-        - STI other than TranslationSentence and OriginalSentence: TranslationSentenceWithCustomMatches?
-            - controller recognizes Class needs special handling
-            - Implies that there are multiple “paths” (sets of split points) through any non-original sentence.
-            - Any part that is pushed to the preceding and/or succeeding sentences makes those sentences new, unchecked matches
-                - special case: pushing chunk back
-                    - show two Target sentences (present and immediately preceding ones) and two Teaching sentences to support proper splitting
+- simple pausing (e.g. spacebar) then confirming (spacebar again)
+- go back 1 second
+- remember timestamp of file
+    - store `begin` and `end` key:values in `audio_sentence_chunks`at index of UrText’s (or `ready` Text’s) `sentence_chunks` array
 
-## 1.0 Optional: Hotwire or React (DOM manipulation w/out refresh)
+## 0.0.14 Automatic Sentence Splitter
+
+- auto-splitter splits files (hard-coded reference to text files / here-doc)
+    - see my original sentence splitter project
+    - and text alignment links (studies and libraries)
+
+## 0.1.0 Export JSON for backup / sharing
+
+- TextDisplayGroup
+- write (integrate into design) proper instructions to allow self-hosting and sharing
+
+## 0.1.0 Convert Text to UrText
+
+If a user wants to make a subordinate Text into its own UrText (to use its split as canonical), then a ***new*** UrText instance is made with a *copy* of the Text’s sentences
+
+- later: either take directly as currently split **or** split from original text saved from original user input
+- later still: all other texts associated with the previous UrText may be imported (copied and associated) with correct splitting conforming to new UrText automatically
